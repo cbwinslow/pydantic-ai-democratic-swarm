@@ -1,0 +1,10 @@
+click
+requests
+pytest
+requests-oauthlib
+google-auth
+google-auth-oauthlib
+google-api-python-client
+whisperx
+sentence-transformers
+faiss-cpu
