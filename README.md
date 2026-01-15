@@ -97,13 +97,69 @@ pydantic_ai_swarm/
 
 ### Democratic Process
 
+The swarm uses a sophisticated democratic governance system with multiple voting mechanisms:
+
 1. **Task Submission** → User or system submits a task
 2. **Agent Analysis** → Multiple agents analyze the task independently
-3. **Confidence Voting** → Each agent votes with confidence scores
-4. **Consensus Building** → Democratic consensus determines best approach
-5. **Task Assignment** → Task assigned to highest-confidence agent
+3. **Democratic Voting** → Agents vote using confidence-weighted voting
+   - **Plurality**: Simple majority voting
+   - **Weighted**: Confidence-weighted votes
+   - **Ranked-Choice**: Preference ranking with instant runoff
+   - **Approval**: Agents approve multiple options
+   - **Consensus**: Requires high agreement threshold
+4. **Consensus Building** → Advanced consensus algorithms for critical decisions
+   - **Simple Majority**: >50% agreement
+   - **Supermajority**: >66% agreement
+   - **Unanimous**: 100% agreement required
+   - **Quorum-Based**: Minimum participation + majority
+   - **Iterative Refinement**: Multiple rounds to build consensus
+   - **Delegated**: High-confidence agents decide
+5. **Task Assignment** → Task assigned based on voting results
 6. **Execution & Monitoring** → Task executed with real-time monitoring
 7. **Learning** → System learns from outcomes for future optimization
+
+### Democratic Voting Example
+
+```python
+from pydantic_ai_swarm import PydanticAISwarmOrchestrator
+from pydantic_ai_swarm.governance.voting import VotingMethod
+from pydantic_ai_swarm.governance.consensus import ConsensusAlgorithm
+
+# Create swarm with democratic voting
+swarm = PydanticAISwarmOrchestrator(
+    "DemocraticSwarm",
+    voting_method=VotingMethod.WEIGHTED,  # Confidence-weighted voting
+    consensus_algorithm=ConsensusAlgorithm.SUPERMAJORITY,  # 66% agreement
+    consensus_threshold=0.66
+)
+
+# Register specialized agents
+await swarm.register_agent(CodeExpertAgent("code_expert"))
+await swarm.register_agent(SecurityAgent("security_specialist"))
+await swarm.register_agent(TestingAgent("test_engineer"))
+
+# Tasks assigned through democratic voting
+result = await swarm.execute_task(
+    "Review code for security vulnerabilities",
+    context={"domain": "security", "priority": "high"}
+)
+
+print(f"Task assigned to: {result.agent_name}")
+print(f"Confidence: {result.confidence_score:.2%}")
+print(f"Consensus: {result.consensus_level:.2%}")
+
+# Build consensus for critical decisions
+consensus = await swarm.build_consensus(
+    proposal_title="Choose deployment strategy",
+    proposal_description="Select production deployment approach",
+    options=["blue-green", "canary", "rolling"],
+    context={"domain": "devops", "criticality": "high"}
+)
+
+if consensus.consensus_reached:
+    print(f"Decision: {consensus.chosen_option}")
+    print(f"Agreement: {consensus.agreement_level:.2%}")
+```
 
 ## 🎯 Use Cases
 
@@ -275,6 +331,7 @@ class CustomTool(BaseTool):
 ## 📚 Documentation
 
 - **[Getting Started](./docs/getting-started.md)** - Quick start guide
+- **[Governance System](./docs/governance-system.md)** - Democratic voting and consensus
 - **[Agent Development](./docs/agent-development.md)** - Creating custom agents
 - **[API Reference](./docs/api-reference.md)** - Complete API documentation
 - **[Efficiency Rules](./docs/efficiency-rules.md)** - Understanding guardrails
