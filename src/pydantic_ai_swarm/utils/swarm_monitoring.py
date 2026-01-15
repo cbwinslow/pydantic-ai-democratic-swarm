@@ -5,7 +5,7 @@ Provides health monitoring and performance tracking for the swarm.
 
 import logging
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
 

@@ -289,8 +289,8 @@ class PydanticAISwarmOrchestrator:
             agent.set_swarm_context(self)
 
             # Register capabilities with efficiency enforcer
+            capabilities = getattr(agent, 'domain_expertise', [])
             if self.efficiency_enforcer:
-                capabilities = getattr(agent, 'domain_expertise', [])
                 for capability in capabilities:
                     await self.efficiency_enforcer.register_agent_capability(agent_name, capability)
 
