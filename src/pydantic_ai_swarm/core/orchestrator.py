@@ -22,17 +22,16 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
-from agents.diagnostic_system import SwarmDiagnosticSystem
-
-from agents.base_agent import BaseAgent
-from agents.efficiency_enforcer import (
+from ..quality.diagnostic_system import SwarmDiagnosticSystem
+from ..quality.efficiency_enforcer import (
     EfficiencyEnforcer,
     SwarmAction,
     get_efficiency_enforcer,
     integrate_with_swarm,
 )
-from agents.swarm_communication import SwarmCommunication
-from agents.swarm_monitoring import SwarmMonitoring
+from ..communication.swarm_communication import SwarmCommunication
+from ..utils.swarm_monitoring import SwarmMonitoring
+from .base_agent import BaseAgent
 
 
 @dataclass

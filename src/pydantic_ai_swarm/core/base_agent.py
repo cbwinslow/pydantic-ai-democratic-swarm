@@ -13,12 +13,13 @@ import json
 import logging
 import time
 from abc import ABC, abstractmethod
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Callable
 from pathlib import Path
 from collections import defaultdict
 from dataclasses import dataclass, field
 
-from agents.robust_tool import RobustTool, ToolResult
+from ..tools.robust_tool import RobustTool, ToolResult
 
 
 @dataclass
@@ -359,6 +360,138 @@ class BaseAgent(ABC):
             vote_success: Whether the voted-upon decision was successful
         """
         self.confidence.record_vote(vote_success)
+    
+    async def calculate_task_confidence(
+        self,
+        task_description: str,
+        context: Dict[str, Any]
+    ) -> float:
+        """Calculate confidence for handling a specific task.
+        
+        Args:
+            task_description: Description of the task
+            context: Task context including domain, requirements, etc.
+            
+        Returns:
+            Confidence score (0-1)
+        """
+        # Get domain from context
+        domain = context.get("domain", "")
+        
+        # Base confidence from domain expertise
+        domain_confidence = self.confidence.get_domain_confidence(domain) if domain else 0.5
+        
+        # Tool confidence (if required tools specified)
+        required_tools = context.get("required_tools", [])
+        if required_tools:
+            tool_confidences = [
+                self.confidence.get_tool_confidence(tool)
+                for tool in required_tools
+                if tool in self.confidence.tools
+            ]
+            tool_confidence = sum(tool_confidences) / len(tool_confidences) if tool_confidences else 0.5
+        else:
+            tool_confidence = 0.5
+        
+        # Recent performance
+        if self.confidence.recent_performance:
+            performance_rate = sum(self.confidence.recent_performance) / len(self.confidence.recent_performance)
+        else:
+            performance_rate = 0.5
+        
+        # Weighted combination
+        confidence = (
+            domain_confidence * 0.4 +
+            tool_confidence * 0.3 +
+            performance_rate * 0.2 +
+            self.confidence.overall * 0.1
+        )
+        
+        return max(0.0, min(1.0, confidence))
+    
+    async def should_abstain_from_vote_async(
+        self,
+        task_description: str,
+        context: Optional[Dict[str, Any]] = None
+    ) -> bool:
+        """Async version of should_abstain_from_vote with task analysis.
+        
+        Args:
+            task_description: Description of the task/decision
+            context: Optional context
+            
+        Returns:
+            True if agent should abstain
+        """
+        context = context or {}
+        domain = context.get("domain", "")
+        
+        # Calculate confidence for this specific task
+        task_confidence = await self.calculate_task_confidence(task_description, context)
+        
+        # Abstain if task confidence is too low
+        return task_confidence < 0.3 or self.confidence.should_abstain(domain, 0.3)
+    
+    async def execute_task(self, task_description: str, context: Dict[str, Any]) -> ToolResult:
+        """Execute a task assigned to this agent.
+        
+        Args:
+            task_description: Description of the task
+            context: Task context
+            
+        Returns:
+            ToolResult with task execution outcome
+        """
+        # This is a placeholder implementation
+        # Actual agents would override this with specific logic
+        
+        self.logger.info(f"Executing task: {task_description}")
+        
+        # For now, return a basic result
+        # Real implementation would execute appropriate tools/logic
+        return ToolResult(
+            success=True,
+            data={"message": f"Task '{task_description}' executed by {self.agent_name}"},
+            execution_id=f"{self.agent_name}_{datetime.now().timestamp()}"
+        )
+    
+    async def start(self) -> bool:
+        """Start the agent.
+        
+        Returns:
+            True if started successfully
+        """
+        self.logger.info(f"Agent {self.agent_name} starting")
+        # Placeholder - agents can override for initialization
+        return True
+    
+    async def stop(self) -> bool:
+        """Stop the agent.
+        
+        Returns:
+            True if stopped successfully
+        """
+        self.logger.info(f"Agent {self.agent_name} stopping")
+        # Placeholder - agents can override for cleanup
+        return True
+    
+    async def get_status_async(self) -> Dict[str, Any]:
+        """Async version of get_status.
+        
+        Returns:
+            Dictionary with agent status
+        """
+        return self.get_status()
+    
+    def set_swarm_context(self, orchestrator: Any) -> None:
+        """Set swarm orchestrator context for communication.
+        
+        Args:
+            orchestrator: The swarm orchestrator instance
+        """
+        self.logger.debug(f"Set swarm context for {self.agent_name}")
+        # Store reference for future use
+        self.state["swarm_orchestrator"] = orchestrator
 
     def send_message(self, recipient: str, message: Dict[str, Any]) -> bool:
         """Send a message to another agent (placeholder for communication system).
