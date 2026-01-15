@@ -31,6 +31,8 @@ from ..quality.efficiency_enforcer import (
 )
 from ..communication.swarm_communication import SwarmCommunication
 from ..utils.swarm_monitoring import SwarmMonitoring
+from ..governance.voting import VotingSystem, VotingMethod, Vote, VotingResult
+from ..governance.consensus import ConsensusBuilder, ConsensusAlgorithm, ConsensusProposal
 from .base_agent import BaseAgent
 
 
@@ -81,7 +83,10 @@ class PydanticAISwarmOrchestrator:
         enable_monitoring: bool = True,
         enable_benchmarking: bool = False,
         voting_timeout_seconds: int = 300,
-        max_concurrent_tasks: int = 10
+        max_concurrent_tasks: int = 10,
+        voting_method: VotingMethod = VotingMethod.WEIGHTED,
+        consensus_algorithm: ConsensusAlgorithm = ConsensusAlgorithm.SUPERMAJORITY,
+        consensus_threshold: float = 0.66
     ):
         """
         Initialize the swarm orchestrator.
@@ -93,6 +98,9 @@ class PydanticAISwarmOrchestrator:
             enable_benchmarking: Enable detailed benchmarking
             voting_timeout_seconds: Timeout for democratic voting
             max_concurrent_tasks: Maximum concurrent tasks
+            voting_method: Default voting method for task assignment
+            consensus_algorithm: Algorithm for consensus building
+            consensus_threshold: Minimum agreement level for consensus
         """
         self.swarm_name = swarm_name
         self.enable_diagnostics = enable_diagnostics
@@ -111,6 +119,22 @@ class PydanticAISwarmOrchestrator:
         self.monitoring = SwarmMonitoring() if enable_monitoring else None
         self.diagnostics = SwarmDiagnosticSystem(self) if enable_diagnostics else None
 
+        # Democratic voting system
+        self.voting_system = VotingSystem(
+            voting_method=voting_method,
+            consensus_threshold=consensus_threshold,
+            min_participation=0.5
+        )
+        
+        # Consensus builder
+        self.consensus_builder = ConsensusBuilder(
+            algorithm=consensus_algorithm,
+            agreement_threshold=consensus_threshold,
+            quorum=0.5,
+            max_rounds=3,
+            round_timeout_seconds=float(voting_timeout_seconds)
+        )
+
         # Efficiency enforcement
         self.efficiency_enforcer: Optional[EfficiencyEnforcer] = None
 
@@ -118,6 +142,9 @@ class PydanticAISwarmOrchestrator:
         self.is_active = False
         self.start_time = None
         self.task_history: List[Dict[str, Any]] = []
+        
+        # Voting history
+        self.voting_history: List[VotingResult] = []
 
         # Performance metrics
         self.metrics = {
@@ -390,7 +417,7 @@ class PydanticAISwarmOrchestrator:
         context: Dict[str, Any]
     ) -> tuple[Optional[BaseAgent], float]:
         """
-        Assign task to agent through democratic voting.
+        Assign task to agent through democratic voting using the voting system.
 
         Returns:
             Tuple of (assigned_agent, confidence_score)
@@ -398,41 +425,107 @@ class PydanticAISwarmOrchestrator:
         if not self.agents:
             return None, 0.0
 
-        # Have each agent vote on task suitability
-        votes = []
+        # Collect votes from all agents
+        votes: List[Vote] = []
+        agent_map: Dict[str, BaseAgent] = {}  # Map agent names to agent objects
+        
         for agent in self.agents.values():
             try:
                 # Get agent confidence for this task
                 confidence = await agent.calculate_task_confidence(task_description, context)
 
                 # Check if agent abstains
-                should_abstain = await agent.should_abstain_from_vote(task_description)
+                should_abstain = await agent.should_abstain_from_vote_async(
+                    task_description, context
+                )
 
-                if not should_abstain and confidence > 0.3:  # Minimum confidence threshold
-                    votes.append({
-                        "agent": agent,
-                        "confidence": confidence,
-                        "weight": confidence  # Higher confidence = higher voting weight
-                    })
+                if should_abstain:
+                    # Record abstention
+                    vote = Vote(
+                        agent_name=agent.agent_name,
+                        option=agent.agent_name,  # Vote for themselves
+                        weight=0.0,
+                        confidence=confidence,
+                        abstain=True,
+                        reasoning="Insufficient confidence or expertise"
+                    )
+                    votes.append(vote)
+                    continue
+
+                # Agent votes for themselves with their confidence as weight
+                voting_weight = agent.get_voting_weight(context.get("domain", ""))
+                
+                vote = Vote(
+                    agent_name=agent.agent_name,
+                    option=agent.agent_name,  # Vote for self
+                    weight=voting_weight,
+                    confidence=confidence,
+                    abstain=False,
+                    reasoning=f"Confidence: {confidence:.2f}, Weight: {voting_weight:.2f}",
+                    context_confidence=agent.confidence.get_domain_confidence(
+                        context.get("domain", "")
+                    )
+                )
+                votes.append(vote)
+                agent_map[agent.agent_name] = agent
 
             except Exception as e:
                 self.logger.warning(f"Agent {agent.agent_name} failed to vote: {e}")
+                # Record failed vote as abstention
+                vote = Vote(
+                    agent_name=agent.agent_name,
+                    option=agent.agent_name,
+                    weight=0.0,
+                    confidence=0.0,
+                    abstain=True,
+                    reasoning=f"Error: {str(e)}"
+                )
+                votes.append(vote)
                 continue
 
         if not votes:
             return None, 0.0
 
-        # Sort by confidence (highest first)
-        votes.sort(key=lambda x: x["confidence"], reverse=True)
-
-        # Assign to highest confidence agent
-        assigned_agent = votes[0]["agent"]
-        confidence = votes[0]["confidence"]
-
-        self.logger.info(f"Democratically assigned task to {assigned_agent.agent_name} "
-                        f"(confidence: {confidence:.2f})")
-
-        return assigned_agent, confidence
+        # Conduct vote using voting system
+        try:
+            result = self.voting_system.conduct_vote(
+                votes=votes,
+                eligible_voters=len(self.agents),
+                method=None  # Use system default
+            )
+            
+            # Store voting result in history
+            self.voting_history.append(result)
+            
+            # Log voting results
+            self.logger.info(
+                f"Voting completed for task assignment - Winner: {result.winner}, "
+                f"Consensus: {result.consensus_level:.2%}, "
+                f"Participation: {result.participation_rate:.2%}"
+            )
+            
+            # Get winning agent
+            if result.winner and result.winner in agent_map:
+                assigned_agent = agent_map[result.winner]
+                confidence = result.get_winner_confidence()
+                
+                # Record vote outcome for agent
+                assigned_agent.record_vote_outcome(True)  # Assume will succeed
+                
+                return assigned_agent, confidence
+            else:
+                self.logger.warning("No clear winner from voting")
+                return None, 0.0
+                
+        except Exception as e:
+            self.logger.error(f"Voting system error: {e}")
+            # Fallback to simple highest confidence
+            active_votes = [v for v in votes if not v.abstain]
+            if active_votes:
+                best_vote = max(active_votes, key=lambda v: v.confidence)
+                if best_vote.option in agent_map:
+                    return agent_map[best_vote.option], best_vote.confidence
+            return None, 0.0
 
     def _update_task_metrics(self, success: bool, execution_time: float):
         """Update internal task metrics."""
@@ -734,6 +827,81 @@ class PydanticAISwarmOrchestrator:
         # Clear state
         self.is_active = False
         self.start_time = None
+    
+    async def build_consensus(
+        self,
+        proposal_title: str,
+        proposal_description: str,
+        options: List[str],
+        context: Optional[Dict[str, Any]] = None,
+        algorithm: Optional[ConsensusAlgorithm] = None
+    ) -> Any:
+        """Build consensus among agents on a decision.
+        
+        Args:
+            proposal_title: Title of the proposal
+            proposal_description: Description of what's being decided
+            options: List of options to choose from
+            context: Optional context for the decision
+            algorithm: Consensus algorithm to use (defaults to system default)
+            
+        Returns:
+            ConsensusResult with decision outcome
+        """
+        context = context or {}
+        
+        # Create proposal
+        proposal = ConsensusProposal(
+            proposal_id=f"{self.swarm_name}_{datetime.now().timestamp()}",
+            title=proposal_title,
+            description=proposal_description,
+            options=options,
+            proposer="orchestrator",
+            context=context
+        )
+        
+        # Build consensus
+        result = await self.consensus_builder.build_consensus(
+            proposal=proposal,
+            agents=list(self.agents.values()),
+            algorithm=algorithm
+        )
+        
+        self.logger.info(
+            f"Consensus building completed for '{proposal_title}': "
+            f"Reached={result.consensus_reached}, "
+            f"Chosen={result.chosen_option}, "
+            f"Agreement={result.agreement_level:.2%}"
+        )
+        
+        return result
+    
+    def get_voting_statistics(self) -> Dict[str, Any]:
+        """Get voting and consensus statistics.
+        
+        Returns:
+            Dictionary with voting statistics
+        """
+        voting_stats = self.voting_system.get_voting_statistics()
+        consensus_stats = self.consensus_builder.get_consensus_statistics()
+        
+        return {
+            "voting": voting_stats,
+            "consensus": consensus_stats,
+            "total_democratic_decisions": (
+                voting_stats.get("total_votes", 0) +
+                consensus_stats.get("total_proposals", 0)
+            ),
+            "recent_voting_history": [
+                {
+                    "winner": v.winner,
+                    "consensus_level": v.consensus_level,
+                    "participation_rate": v.participation_rate,
+                    "method": v.voting_method.value
+                }
+                for v in self.voting_history[-10:]
+            ]
+        }
 
     def __repr__(self) -> str:
         return f"PydanticAISwarmOrchestrator(name='{self.swarm_name}', agents={len(self.agents)}, active={self.is_active})"
