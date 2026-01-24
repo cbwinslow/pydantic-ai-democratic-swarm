@@ -1,0 +1,33 @@
+{
+  "agents": {
+    "content_writer": {
+      "type": "ContentAgent",
+      "description": "Content creation specialist"
+    },
+    "code_reviewer": {
+      "type": "CodeAgent",
+      "description": "Code analysis specialist"
+    },
+    "security_analyst": {
+      "type": "SecurityAgent",
+      "description": "Security analysis specialist"
+    },
+    "writer": {
+      "type": "ContentAgent",
+      "description": "Content creation agent"
+    },
+    "coder": {
+      "type": "CodeAgent",
+      "description": "Code analysis agent"
+    },
+    "security": {
+      "type": "SecurityAgent",
+      "description": "Security analysis agent"
+    }
+  },
+  "swarm": {
+    "name": "DemoSwarm",
+    "voting_method": "weighted",
+    "consensus_threshold": 0.66
+  }
+}
