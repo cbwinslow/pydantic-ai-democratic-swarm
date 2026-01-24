@@ -32,21 +32,15 @@ class CodeAgent(BaseAgent):
     def __init__(
         self,
         agent_name: str,
-        description: Optional[str] = None,
         **kwargs: Any
     ) -> None:
         """Initialize code agent.
         
         Args:
             agent_name: Unique name for the agent
-            description: Optional description of the agent
             **kwargs: Additional configuration options
         """
-        super().__init__(
-            agent_name=agent_name,
-            description=description or "Code analysis and development specialist",
-            **kwargs
-        )
+        super().__init__(agent_name=agent_name, **kwargs)
         self.domain_expertise = [
             "code_analysis",
             "code_review",
@@ -69,6 +63,14 @@ class CodeAgent(BaseAgent):
             "ruby",
             "php",
         ]
+    
+    def _initialize_tools(self) -> Dict[str, Any]:
+        """Initialize code analysis tools.
+        
+        Returns:
+            Dictionary of tools for code analysis
+        """
+        return {}
     
     async def calculate_task_confidence(
         self,
@@ -267,15 +269,10 @@ class SecurityAgent(BaseAgent):
     def __init__(
         self,
         agent_name: str,
-        description: Optional[str] = None,
         **kwargs: Any
     ) -> None:
         """Initialize security agent."""
-        super().__init__(
-            agent_name=agent_name,
-            description=description or "Security analysis specialist",
-            **kwargs
-        )
+        super().__init__(agent_name=agent_name, **kwargs)
         self.domain_expertise = [
             "security",
             "vulnerability_analysis",
@@ -296,6 +293,14 @@ class SecurityAgent(BaseAgent):
             "buffer_overflow",
             "insecure_deserialization",
         ]
+    
+    def _initialize_tools(self) -> Dict[str, Any]:
+        """Initialize security analysis tools.
+        
+        Returns:
+            Dictionary of tools for security analysis
+        """
+        return {}
     
     async def calculate_task_confidence(
         self,
@@ -431,15 +436,10 @@ class TestingAgent(BaseAgent):
     def __init__(
         self,
         agent_name: str,
-        description: Optional[str] = None,
         **kwargs: Any
     ) -> None:
         """Initialize testing agent."""
-        super().__init__(
-            agent_name=agent_name,
-            description=description or "Software testing and QA specialist",
-            **kwargs
-        )
+        super().__init__(agent_name=agent_name, **kwargs)
         self.domain_expertise = [
             "testing",
             "qa",
@@ -450,6 +450,14 @@ class TestingAgent(BaseAgent):
             "e2e_testing",
             "performance_testing",
         ]
+    
+    def _initialize_tools(self) -> Dict[str, Any]:
+        """Initialize testing tools.
+        
+        Returns:
+            Dictionary of tools for testing
+        """
+        return {}
     
     async def calculate_task_confidence(
         self,

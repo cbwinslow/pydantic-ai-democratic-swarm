@@ -32,21 +32,15 @@ class ContentAgent(BaseAgent):
     def __init__(
         self,
         agent_name: str,
-        description: Optional[str] = None,
         **kwargs: Any
     ) -> None:
         """Initialize content agent.
         
         Args:
             agent_name: Unique name for the agent
-            description: Optional description of the agent
             **kwargs: Additional configuration options
         """
-        super().__init__(
-            agent_name=agent_name,
-            description=description or "Specialized content creation agent",
-            **kwargs
-        )
+        super().__init__(agent_name=agent_name, **kwargs)
         self.domain_expertise = [
             "content_creation",
             "writing",
@@ -66,6 +60,15 @@ class ContentAgent(BaseAgent):
             "email",
             "press_release",
         ]
+    
+    def _initialize_tools(self) -> Dict[str, Any]:
+        """Initialize content-specific tools.
+        
+        Returns:
+            Dictionary of tools for content creation
+        """
+        # In a full implementation, this would return actual tool instances
+        return {}
     
     async def calculate_task_confidence(
         self,
@@ -223,15 +226,10 @@ class SocialMediaAgent(BaseAgent):
     def __init__(
         self,
         agent_name: str,
-        description: Optional[str] = None,
         **kwargs: Any
     ) -> None:
         """Initialize social media agent."""
-        super().__init__(
-            agent_name=agent_name,
-            description=description or "Social media content specialist",
-            **kwargs
-        )
+        super().__init__(agent_name=agent_name, **kwargs)
         self.domain_expertise = [
             "social_media",
             "twitter",
@@ -243,6 +241,14 @@ class SocialMediaAgent(BaseAgent):
             "viral_marketing",
         ]
         self.platforms = ["twitter", "linkedin", "instagram", "facebook", "tiktok", "youtube"]
+    
+    def _initialize_tools(self) -> Dict[str, Any]:
+        """Initialize social media-specific tools.
+        
+        Returns:
+            Dictionary of tools for social media
+        """
+        return {}
     
     async def calculate_task_confidence(
         self,
