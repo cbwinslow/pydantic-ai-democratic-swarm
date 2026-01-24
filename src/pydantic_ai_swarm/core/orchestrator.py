@@ -514,7 +514,14 @@ class PydanticAISwarmOrchestrator:
                 
                 return assigned_agent, confidence
             else:
-                self.logger.warning("No clear winner from voting")
+                # No clear winner - use fallback to highest confidence agent
+                self.logger.warning("No clear winner from voting, using fallback")
+                active_votes = [v for v in votes if not v.abstain]
+                if active_votes:
+                    best_vote = max(active_votes, key=lambda v: v.confidence)
+                    if best_vote.option in agent_map:
+                        self.logger.info(f"Fallback: assigning to {best_vote.option}")
+                        return agent_map[best_vote.option], best_vote.confidence
                 return None, 0.0
                 
         except Exception as e:

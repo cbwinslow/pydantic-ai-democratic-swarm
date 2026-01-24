@@ -30,13 +30,21 @@ class MockAgent:
         self.confidence = MagicMock()
         self.confidence.get_domain_confidence = MagicMock(return_value=confidence)
     
-    async def should_abstain_from_vote(self, domain: str) -> bool:
+    def should_abstain_from_vote(self, domain: str) -> bool:
         """Check if agent should abstain."""
         return self.default_confidence < 0.3
     
     async def calculate_task_confidence(self, task: str, context: dict) -> float:
-        """Calculate task confidence."""
-        return self.default_confidence
+        """Calculate task confidence.
+        
+        Returns higher confidence for preferred option.
+        """
+        # Check if this task mentions the preferred option
+        if self.preferred_option in task:
+            return self.default_confidence
+        else:
+            # Return lower confidence for other options
+            return self.default_confidence * 0.5
     
     def get_voting_weight(self, domain: str = "") -> float:
         """Get voting weight."""

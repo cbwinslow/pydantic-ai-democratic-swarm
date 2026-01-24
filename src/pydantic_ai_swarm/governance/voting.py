@@ -88,14 +88,17 @@ class VotingResult:
             return 0.0
         
         winner_votes = self.vote_counts.get(self.winner, 0)
-        total_non_abstain = self.total_votes - self.abstentions
+        total_votes_cast = sum(self.vote_counts.values())
         
-        if total_non_abstain == 0:
+        if total_votes_cast == 0:
             return 0.0
         
         # Confidence based on vote proportion and consensus level
-        vote_proportion = winner_votes / total_non_abstain
-        return (vote_proportion * 0.7) + (self.consensus_level * 0.3)
+        vote_proportion = winner_votes / total_votes_cast
+        confidence = (vote_proportion * 0.7) + (self.consensus_level * 0.3)
+        
+        # Ensure confidence is clamped to [0, 1]
+        return max(0.0, min(1.0, confidence))
 
 
 class VotingSystem:

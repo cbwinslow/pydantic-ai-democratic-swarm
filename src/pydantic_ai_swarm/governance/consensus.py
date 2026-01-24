@@ -212,7 +212,7 @@ class ConsensusBuilder:
         """
         try:
             # Check if agent should abstain
-            should_abstain = await agent.should_abstain_from_vote(
+            should_abstain = agent.should_abstain_from_vote(
                 proposal.context.get("domain", "")
             )
             
