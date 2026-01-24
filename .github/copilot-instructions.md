@@ -378,15 +378,16 @@ logger.error(
 ## Tools and Integrations
 
 ### Adding New Tools
-Extend `BaseTool` for new functionality:
+Extend `RobustTool` for new functionality:
 ```python
-from pydantic_ai_swarm.tools.robust_tool import BaseTool
+from pydantic_ai_swarm.tools.robust_tool import RobustTool, ToolResult
 
-class CustomTool(BaseTool):
+class CustomTool(RobustTool):
     """Custom tool for specific operations."""
     
-    name = "custom_tool"
-    description = "Performs custom operations"
+    def __init__(self, name: str = "custom_tool", description: str = "Performs custom operations"):
+        """Initialize custom tool."""
+        super().__init__(name, description)
     
     async def execute(self, parameters: Dict[str, Any]) -> ToolResult:
         """Execute tool functionality."""
