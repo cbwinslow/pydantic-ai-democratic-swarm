@@ -181,7 +181,7 @@ pytest tests/unit/test_orchestrator.py -v
 ### Setup Development Environment
 ```bash
 # Clone repository
-git clone <repo-url>
+git clone https://github.com/cbwinslow/pydantic-ai-democratic-swarm.git
 cd pydantic-ai-democratic-swarm
 
 # Create virtual environment
@@ -409,17 +409,26 @@ class CustomTool(BaseTool):
 ### Core Dependencies
 - `pydantic>=2.0.0` - Data validation
 - `openai>=1.0.0` - AI model integration
+- `asyncio-mqtt>=0.16.0` - MQTT for agent communication
 - `redis>=5.0.0` - Distributed state management
+- `aioredis>=2.0.0` - Async Redis client
+- `python-dotenv>=1.0.0` - Environment variable management
 - `structlog>=23.0.0` - Structured logging
 - `rich>=13.0.0` - Terminal output
 - `click>=8.0.0` - CLI interface
+- `pyyaml>=6.0` - YAML configuration
 
 ### Development Dependencies
 - `pytest>=7.0.0` - Testing framework
 - `pytest-asyncio>=0.21.0` - Async test support
+- `pytest-cov>=4.0.0` - Test coverage
 - `black>=23.0.0` - Code formatting
+- `isort>=5.12.0` - Import sorting
 - `mypy>=1.0.0` - Type checking
 - `ruff>=0.1.0` - Linting
+- `pre-commit>=3.0.0` - Pre-commit hooks
+- `sphinx>=7.0.0` - Documentation
+- `sphinx-rtd-theme>=1.3.0` - Documentation theme
 
 ## Performance Considerations
 
