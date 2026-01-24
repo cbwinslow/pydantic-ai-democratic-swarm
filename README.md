@@ -23,7 +23,7 @@ Unlike traditional AI agent systems that rely on hierarchical control or simple 
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/pydantic-ai-democratic-swarm.git
+git clone https://github.com/cbwinslow/pydantic-ai-democratic-swarm.git
 cd pydantic-ai-democratic-swarm
 
 # Install dependencies
@@ -257,7 +257,7 @@ print(f"Code Reuse Rate: {report['efficiency_analysis']['code_reuse_rate']:.1%}"
 
 ```bash
 # Clone and setup
-git clone https://github.com/yourusername/pydantic-ai-democratic-swarm.git
+git clone https://github.com/cbwinslow/pydantic-ai-democratic-swarm.git
 cd pydantic-ai-democratic-swarm
 
 # Create virtual environment

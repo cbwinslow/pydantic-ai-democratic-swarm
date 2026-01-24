@@ -62,11 +62,11 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/pydantic-ai-democratic-swarm"
+Homepage = "https://github.com/cbwinslow/pydantic-ai-democratic-swarm"
 Documentation = "https://pydantic-ai-swarm.readthedocs.io/"
-Repository = "https://github.com/yourusername/pydantic-ai-democratic-swarm"
-Issues = "https://github.com/yourusername/pydantic-ai-democratic-swarm/issues"
-Changelog = "https://github.com/yourusername/pydantic-ai-democratic-swarm/blob/main/CHANGELOG.md"
+Repository = "https://github.com/cbwinslow/pydantic-ai-democratic-swarm"
+Issues = "https://github.com/cbwinslow/pydantic-ai-democratic-swarm/issues"
+Changelog = "https://github.com/cbwinslow/pydantic-ai-democratic-swarm/blob/main/CHANGELOG.md"
 
 [project.scripts]
 pydantic-swarm = "pydantic_ai_swarm.cli:main"
